@@ -33,6 +33,8 @@ public class CallActivity extends AppCompatActivity {
     String firstName, lastName;
     static String [] arrayFName, arrayLName, arrayPhone;
     int index;
+    boolean found;
+    static String f, l, s;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -42,40 +44,44 @@ public class CallActivity extends AppCompatActivity {
         lName = findViewById(R.id.lastName);
         find = findViewById(R.id.find);
         call = findViewById(R.id.makeCall);
+        found = false;
+
+        String AUTHORITY = "com.example.jh949711.phonebook.MyContentProvider";
+        String TABLE_PRODUCT = "product";
+        Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" +TABLE_PRODUCT);
+        ContentResolver contentResolver = getContentResolver();
+        String [] projection = {COLUMN_ID, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_PHONE_NUMBER};
+        Cursor cursor = contentResolver.query(CONTENT_URI,projection,null,null,null);
+        s = "";
+        f = "";
+        l = "";
+
+        if (!cursor.moveToFirst()) {s = "no result to display";}
+        else{
+            do {
+                f += String.format("%s\n", cursor.getString(1));
+                l += String.format("%s\n", cursor.getString(2));
+                s += String.format("%-10s\n", cursor.getString(3));
+
+            } while (cursor.moveToNext());
+        }
 
         find.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                String AUTHORITY = "com.example.jh949711.phonebook.MyContentProvider";
-                String TABLE_PRODUCT = "product";
-                Uri CONTENT_URI = Uri.parse("content://" + AUTHORITY + "/" +TABLE_PRODUCT);
-                ContentResolver contentResolver = getContentResolver();
-                String [] projection = {COLUMN_ID, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_PHONE_NUMBER};
-                Cursor cursor = contentResolver.query(CONTENT_URI,projection,null,null,null);
-                String s = "";
-                String f = "";
-                String l = "";
-                firstName = fName.getText().toString();
-                lastName = lName.getText().toString();
-
                 TextView tv = findViewById(R.id.phoneNumber);
-                if (!cursor.moveToFirst()) {s = "no result to display";}
-                else{
-                    do {
-                        f += String.format("%s\n", cursor.getString(1));
-                        l += String.format("%s\n", cursor.getString(2));
-                        s += String.format("%-10s\n", cursor.getString(3));
-
-                    } while (cursor.moveToNext());
-                }
                 arrayFName = f.split("\n");
                 arrayLName = l.split("\n");
                 arrayPhone = s.split("\n");
 
+                firstName = fName.getText().toString();
+                lastName = lName.getText().toString();
+                
                 for ( int j = 0; j < arrayFName.length; j++ ) {
                     if ( (firstName.equals(arrayFName[j])) && (lastName.equals(arrayLName[j])) ) {
                         tv.setText(arrayPhone[j]);
                         index = j;
+                        found = true;
                         break;
                     }
                     else {
@@ -95,7 +101,10 @@ public class CallActivity extends AppCompatActivity {
                 String [] projection = {COLUMN_ID, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_PHONE_NUMBER};
                 Cursor cursor = contentResolver.query(CONTENT_URI,projection,null,null,null);
                 String s = "";
-                if (!cursor.moveToFirst()) s = "Name not in contacts";
+                if (!found) {
+                    Toast.makeText(CallActivity.this , "Name not in contacts",
+                            Toast.LENGTH_SHORT).show();
+                }
 
                 else{
                     String phone_number = arrayPhone[index];
