@@ -30,6 +30,9 @@ public class CallActivity extends AppCompatActivity {
     private static final String COLUMN_PHONE_NUMBER = "number";
     EditText fName, lName;
     Button find, call;
+    String firstName, lastName;
+    static String [] arrayFName, arrayLName, arrayPhone;
+    int index;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -39,6 +42,7 @@ public class CallActivity extends AppCompatActivity {
         lName = findViewById(R.id.lastName);
         find = findViewById(R.id.find);
         call = findViewById(R.id.makeCall);
+
         find.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -49,14 +53,36 @@ public class CallActivity extends AppCompatActivity {
                 String [] projection = {COLUMN_ID, COLUMN_FIRST_NAME, COLUMN_LAST_NAME, COLUMN_PHONE_NUMBER};
                 Cursor cursor = contentResolver.query(CONTENT_URI,projection,null,null,null);
                 String s = "";
+                String f = "";
+                String l = "";
+                firstName = fName.getText().toString();
+                lastName = lName.getText().toString();
+
                 TextView tv = findViewById(R.id.phoneNumber);
-                if (!cursor.moveToFirst()) s = "no result to display";
+                if (!cursor.moveToFirst()) {s = "no result to display";}
                 else{
                     do {
-                        s += String.format("%-10s\n",cursor.getString(3));
+                        f += String.format("%s\n", cursor.getString(1));
+                        l += String.format("%s\n", cursor.getString(2));
+                        s += String.format("%-10s\n", cursor.getString(3));
+
                     } while (cursor.moveToNext());
                 }
-                tv.setText(s);
+                arrayFName = f.split("\n");
+                arrayLName = l.split("\n");
+                arrayPhone = s.split("\n");
+
+                for ( int j = 0; j < arrayFName.length; j++ ) {
+                    if ( (firstName.equals(arrayFName[j])) && (lastName.equals(arrayLName[j])) ) {
+                        tv.setText(arrayPhone[j]);
+                        index = j;
+                        break;
+                    }
+                    else {
+                        tv.setText("Name was not found. Check spelling");
+                    }
+                }
+
             }
         });
         call.setOnClickListener(new View.OnClickListener() {
@@ -72,7 +98,7 @@ public class CallActivity extends AppCompatActivity {
                 if (!cursor.moveToFirst()) s = "Name not in contacts";
 
                 else{
-                    String phone_number = cursor.getString(3);
+                    String phone_number = arrayPhone[index];
                     try {
                         Uri uri = Uri.parse("tel:" + phone_number);
                         Intent intent = new Intent(Intent.ACTION_DIAL, uri);
